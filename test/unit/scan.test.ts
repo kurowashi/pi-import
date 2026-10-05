@@ -41,6 +41,7 @@ test("skips fenced code blocks for both fence characters", () => {
 
 test("does not let a comment inside a fence hide the fence or later imports", () => {
 	assert.deepEqual(scanImports("```\n<!-- note\n```\n@child.md\n"), ["child.md"]);
+	assert.deepEqual(scanImports("```\n<!-- note\n```\n@child.md\n-->\n"), ["child.md"]);
 	assert.equal(stripForInjection("```\n<!-- note -->\n```\n"), "```\n<!-- note -->\n```\n");
 });
 
