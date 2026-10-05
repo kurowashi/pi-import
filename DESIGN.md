@@ -37,7 +37,8 @@ Claude Code は Markdown パーサー（marked）のトークン単位で抽出�
 | 強調記法の直後の `@`（`**@a.md**`）は展開しない | 直前が空白でないため。Claude Code は text トークン先頭として展開する |
 | インデントコードブロック（4スペース）は除外しない | 公式ドキュメントの保証はコードスパンとフェンスコードブロックのみ |
 | 複数行にまたがるインラインコードスパンは除外しない | 行単位スキャナの割り切り。フェンスコードブロックは除外する |
-| 閉じられていない `<!--` の残りはそのまま残す | 誤記が以降の本文を飲み込まないため。Claude Code と同じ意図 |
+| 閉じられていない `<!--` は注入本文ではそのまま残し、スキャンはそこで止める | Claude Code は未閉じ HTML ブロック以降をスキャンせず、注入本文には残す |
+| 閉じられていない frontmatter（`---` が閉じない）は本文として扱う | Claude Code の `FRONTMATTER_REGEX` と同じ |
 
 ## Pi 拡張としての前提
 
@@ -51,5 +52,7 @@ Claude Code は Markdown パーサー（marked）のトークン単位で抽出�
 |---|---|
 | 抽出正規表現・有効パス判定・深さ・サイズ上限・拡張子リスト | Claude Code 2.1.287 のローカルバイナリに埋め込まれた JavaScript |
 | メモリ本文の固定文・種別ごとの説明文・区切り・改行 | 同じ JavaScript と、`ANTHROPIC_BASE_URL` をローカル HTTP サーバーに向けて捕獲した `/v1/messages` リクエスト |
-| コードスパン・フェンス・コメント・frontmatter・引用符・空白エスケープ・末尾記号 | 捕獲したリクエストと `test/unit/scan.test.ts` |
-| 順序・重複・循環・ネスト相対・外部 import | 捕獲したリクエストと `test/unit/expand.test.ts` |
+| コードスパン・フェンス・コメント・frontmatter・引用符・空白エスケープ・末尾記号 | 捕獲したリクエストと [test/unit/scan.test.ts](test/unit/scan.test.ts) |
+| 順序・重複・循環・ネスト相対・外部 import | 捕獲したリクエストと [test/unit/expand.test.ts](test/unit/expand.test.ts) |
+
+捕獲は Claude Code 2.1.287（Linux、`~/.local/share/claude/versions/2.1.287`）を対象に、`ANTHROPIC_BASE_URL` をローカルの HTTP サーバーへ向けて `/v1/messages` のリクエストボディを保存して行いました。埋め込まれた JavaScript は同じバイナリから直接確認できます。

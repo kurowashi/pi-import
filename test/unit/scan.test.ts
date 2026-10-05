@@ -39,6 +39,20 @@ test("skips fenced code blocks for both fence characters", () => {
 	assert.deepEqual(scanImports("~~~\n@a.md\n~~~\n@b.md\n"), ["b.md"]);
 });
 
+test("does not let a comment inside a fence hide the fence or later imports", () => {
+	assert.deepEqual(scanImports("```\n<!-- note\n```\n@child.md\n"), ["child.md"]);
+	assert.equal(stripForInjection("```\n<!-- note -->\n```\n"), "```\n<!-- note -->\n```\n");
+});
+
+test("does not let a fence inside a comment open a code block", () => {
+	assert.deepEqual(scanImports("<!--\n```\n-->\n@child.md\n"), ["child.md"]);
+	assert.equal(stripForInjection("<!--\n```\n-->\n@child.md\n"), "@child.md\n");
+});
+
+test("stops scanning after an unclosed comment", () => {
+	assert.deepEqual(scanImports("<!-- note\n@hidden.md\n"), []);
+});
+
 test("skips everything after an unclosed fence", () => {
 	assert.deepEqual(scanImports("```\n@a.md\n"), []);
 });
@@ -50,6 +64,10 @@ test("skips block comments but scans text after them", () => {
 
 test("skips imports inside frontmatter", () => {
 	assert.deepEqual(scanImports("---\ntitle: x\nsecret: @no.md\n---\n@yes.md\n"), ["yes.md"]);
+});
+
+test("treats an unclosed frontmatter block as body text", () => {
+	assert.deepEqual(scanImports("---\ntitle: @a.md\n"), ["a.md"]);
 });
 
 test("returns no candidates when the file has no @ at all", () => {
@@ -66,8 +84,8 @@ test("stripForInjection removes frontmatter and keeps the body", () => {
 });
 
 test("stripForInjection removes block comments including multi-line ones", () => {
-	assert.equal(stripForInjection("<!-- note -->\nbody\n"), "\nbody\n");
-	assert.equal(stripForInjection("<!-- a\nb -->\nbody\n"), "\nbody\n");
+	assert.equal(stripForInjection("<!-- note -->\nbody\n"), "body\n");
+	assert.equal(stripForInjection("<!-- a\nb -->\nbody\n"), "body\n");
 });
 
 test("stripForInjection keeps a comment that never closes", () => {

@@ -1,6 +1,6 @@
 # AGENTS.md — pi-import で作業するエージェント向けの指示
 
-読者は pi-import を変更する AI エージェントと開発者です。利用者向けの仕様は README に、設計の判断基準は [DESIGN.md](DESIGN.md) と [PHILOSOPHY.md](PHILOSOPHY.md)（このプラグイン群共通）に書きます。
+読者は pi-import を変更する AI エージェントと開発者です。利用者向けの仕様は [README.md](README.md) に、設計の判断基準は [DESIGN.md](DESIGN.md) と [PHILOSOPHY.md](PHILOSOPHY.md)（このプラグイン群共通）に書きます。
 
 ここには、壊してはいけない制約と、制約に触れる変更の手順だけを書きます。制約の正はテストで、下の表はその索引です。実装と表が食い違った場合はテストが正です。検証手段を併記できないものは制約として書かず、自動テストできない範囲は末尾に分けます。
 
@@ -56,7 +56,7 @@
 | グローバルは agent dir の `pi-import.json`、プロジェクトは `<cwd>/.pi/pi-import.json` | `test/unit/config.test.ts` | `src/config.ts` |
 | プロジェクトは trusted のときだけ読み、フィールド単位で上書きする | `test/unit/config.test.ts` | `src/config.ts` の `loadImportConfig` |
 | 壊れた JSON・不正値は既定値で動き、警告を出す。未知キーは無視する | `test/unit/config.test.ts` | `src/config.ts` の `resolveConfig` と `readConfigFile` |
-| 警告は `session_start` で1回通知する | `test/integration/extension.test.ts` | `src/index.ts` の `reload` |
+| 警告は UI のあるとき `session_start` ごとに通知する | `test/integration/extension.test.ts` | `src/index.ts` の `reload` |
 
 ### 依存関係・import
 

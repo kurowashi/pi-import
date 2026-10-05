@@ -41,9 +41,11 @@ test("no tools are registered", async () => {
 	assert.deepEqual([...extension.tools.keys()], [], "a tool would tax every request; inject through events instead");
 });
 
-test("no commands are registered", async () => {
+test("no commands, shortcuts, or flags are registered", async () => {
 	const extension = await loadImportExtension();
 	assert.deepEqual([...extension.commands.keys()], []);
+	assert.deepEqual([...extension.shortcuts.keys()], []);
+	assert.deepEqual([...extension.flags.keys()], []);
 });
 
 test("every documented event has exactly one handler", async () => {
