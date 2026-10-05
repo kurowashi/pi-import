@@ -2,9 +2,46 @@
 
 読者は pi-import を変更する開発者と AI エージェントです。共通の哲学は [PHILOSOPHY.md](PHILOSOPHY.md)、検証可能な制約と変更手順は [AGENTS.md](AGENTS.md) にあります。
 
-## 何を解くか
+## 目指すべきところ
 
-Pi は context file（`AGENTS.md` / `CLAUDE.md` など）を読み込んで `project_context` セクションに注入しますが、Claude Code の `@path` ファイル注入は持ちません。pi-import は `@path` を展開し、Claude Code 2.1.287 と同一のメモリ本文を再現します。
+対象は Pi を使う開発者とエージェントです。Pi は context file（`AGENTS.md` / `CLAUDE.md` など）を読み込んで `project_context` セクションに注入しますが、Claude Code の `@path` ファイル注入は持ちません。目的は、context file に書いた `@path` をそのまま使い、import 先の本文を Claude Code 2.1.287 と同一のメモリ本文として再現することです。
+
+### 達成状態
+
+| 状態 | 観測方法 |
+|---|---|
+| import 先の本文がプロンプトに入る | 実 Pi セッションの system message に `Contents of ...` が親 → import の順で入る |
+| メモリ本文が Claude Code 2.1.287 と一致する | `test/unit/format.test.ts` の golden 値 |
+| import が1つ以上解決したときだけ置き換わる | `test/integration/extension.test.ts` |
+| 本文を包む形式を設定ファイルで選べる | `wrapper`（`system-reminder` / `none`）でタグの有無が変わる |
+| 設定ファイルの変更が次のセッション開始で反映される | `session_start`（`/reload` を含む）で読み込まれる |
+| 設定ファイルが壊れていてもセッションが止まらない | 壊れた JSON でも警告のみで起動する |
+
+### 最小の成立条件
+
+次の機能がそろえば上の達成状態を満たします。
+
+| 成立条件 | 達成する状態 |
+|---|---|
+| 行単位スキャナによる `@path` の抽出と展開 | import 先の本文がプロンプトに入る |
+| Claude Code 形式の固定文・説明文 | メモリ本文が Claude Code 2.1.287 と一致する |
+| `wrapper` による包み方の切替 | 本文を包む形式を設定ファイルで選べる |
+| 1つ以上解決したときだけの `project_context` の置き換え | import が1つ以上解決したときだけ置き換わる |
+| グローバルとプロジェクトの設定ファイルの読み込みと検証 | 設定ファイルの変更が次のセッション開始で反映される。設定ファイルが壊れていてもセッションが止まらない |
+
+### 非目標
+
+Claude Code または Pi の一般機能と重複するため、次は実装しません。提案時はここを先に確認します。
+
+- 外部 import の承認ダイアログ。Pi は全モード共通の承認 UX を持たず、無いまま読み込みます。
+- frontmatter `paths:` による条件付きルール。Pi に対応する概念がありません。
+- auto memory / team memory / `MEMORY.md` の切り詰め。Pi に存在しません。
+- status line とコマンド。注入専用であり、モデル向けのツールも登録しません。
+- `claudeMdExcludes` 相当の除外設定。Pi 側の context file 探索を変更しないためです。
+
+### 拡張の条件
+
+最小の成立条件を超える機能は、最小構成には含めません。現在の設計に含まれるものも今後の追加も、達成状態への寄与を実測で示せるときだけ維持・追加します。実測で寄与が示せない機能は削除の候補とします。
 
 ## 仕様の位置づけ
 
@@ -17,16 +54,6 @@ Claude Code 2.1.287 の挙動が外部仕様の基準です。リポジトリ内
 - wrapper は `system-reminder` を既定にする。Claude Code 2.1.287 がこの形式で包むためです。`none` は Pi のシステムプロンプト内で素の本文を好む場合の選択肢です。
 - パーサは自作する。公式に保証された除外はコードスパンとフェンスコードブロックであり、Markdown パーサー（marked）のトークン単位の一致までは必要ないためです。実行時依存ゼロを保つほうがテストも配布も単純になります。
 - 種別（`user` / `project`）は context file の場所で決め、import は親の種別を継承する。Claude Code 内部の `processMemoryFile` が再帰のたびに種別を渡すのと同じです。
-
-## 意図的にやらないこと
-
-Claude Code または Pi の一般機能と重複するため、次は実装しません。提案時はここを先に確認します。
-
-- 外部 import の承認ダイアログ。Pi は全モード共通の承認 UX を持たず、無いまま読み込みます。
-- frontmatter `paths:` による条件付きルール。Pi に対応する概念がありません。
-- auto memory / team memory / `MEMORY.md` の切り詰め。Pi に存在しません。
-- status line とコマンド。注入専用であり、モデル向けのツールも登録しません。
-- `claudeMdExcludes` 相当の除外設定。Pi 側の context file 探索を変更しないためです。
 
 ## スキャナの限定
 
